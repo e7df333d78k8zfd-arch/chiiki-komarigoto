@@ -2,66 +2,59 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>地域困りごと</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地域の困りごと投稿</title>
 
 <style>
 body {
   font-family: sans-serif;
-  margin: 10px;
+  background: #f2f2f2;
+  margin: 0;
+  padding: 16px;
 }
-.issue {
-  border: 1px solid #ccc;
+
+h1 {
+  text-align: center;
+}
+
+input, select, textarea, button {
+  width: 100%;
+  margin-bottom: 12px;
   padding: 8px;
-  margin-bottom: 8px;
-  border-radius: 6px;
+  font-size: 16px;
 }
-.status {
-  font-size: 12px;
-  color: #666;
+
+button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
 }
 </style>
 </head>
 <body>
 
-<h2>地域の困りごと投稿</h2>
+<h1>地域の困りごと投稿</h1>
 
-<input id="title" placeholder="タイトル"><br><br>
+<input id="title" placeholder="タイトル">
+
+<input id="location" placeholder="地域・場所（例：○○町）">
 
 <select id="category">
-  <option>高齢者</option>
-  <option>子ども</option>
-  <option>ゴミ</option>
-  <option>防犯</option>
-  <option>交通</option>
-  <option>その他</option>
-</select><br><br>
+  <option value="高齢者">高齢者</option>
+  <option value="子育て">子育て</option>
+  <option value="障害">障害</option>
+  <option value="生活困窮">生活困窮</option>
+</select>
 
-<textarea id="content" rows="4" placeholder="内容"></textarea><br><br>
+<textarea id="content" rows="5" placeholder="困っている内容"></textarea>
 
-<input id="location" placeholder="場所（〇丁目まで）"><br><br>
+<button id="submitBtn">投稿</button>
 
-<button id="postBtn">投稿</button>
-
-<hr>
-
-<h2>一覧</h2>
-<div id="list"></div>
-
-<!-- Firebase（CDN版） -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// 🔽 あなたが貼ってくれたSDK（そのまま使用）
 const firebaseConfig = {
   apiKey: "AIzaSyCuA1iGo0nHN7w4tuv6LaQ34I41Yp0EXbE",
   authDomain: "chiiki-komarigoto.firebaseapp.com",
@@ -71,50 +64,37 @@ const firebaseConfig = {
   appId: "1:278691153990:web:3dbc7a67c2959a9a726247"
 };
 
-// Firebase 初期化
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 投稿処理
-document.getElementById("postBtn").addEventListener("click", async () => {
+document.getElementById("submitBtn").addEventListener("click", async () => {
+  const title = document.getElementById("title").value.trim();
+  const location = document.getElementById("location").value.trim();
+  const category = document.getElementById("category").value;
+  const content = document.getElementById("content").value.trim();
+
+  if (!title || !location || !content) {
+    alert("未入力の項目があります");
+    return;
+  }
+
   try {
     await addDoc(collection(db, "issues"), {
-      title: title.value,
-      category: category.value,
-      content: content.value,
-      location: location.value,
-      status: "未対応",
+      title,
+      location,
+      category,
+      content,
       createdAt: serverTimestamp()
     });
-    title.value = "";
-    content.value = "";
-    location.value = "";
-    alert("投稿しました");
+
+    alert("投稿しました！");
+    document.getElementById("title").value = "";
+    document.getElementById("location").value = "";
+    document.getElementById("content").value = "";
+
   } catch (e) {
     alert("エラー：" + e.message);
   }
-});
-
-// 一覧表示（リアルタイム）
-const q = query(
-  collection(db, "issues"),
-  orderBy("createdAt", "desc")
-);
-
-onSnapshot(q, (snapshot) => {
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-  snapshot.forEach(doc => {
-    const d = doc.data();
-    list.innerHTML += `
-      <div class="issue">
-        <strong>${d.title}</strong><br>
-        【${d.category}】 ${d.location}<br>
-        ${d.content}<br>
-        <div class="status">状態：${d.status}</div>
-      </div>
-    `;
-  });
 });
 </script>
 
