@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>地域困りごと</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: sans-serif; margin: 10px; }
+.issue {
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+}
+.status { font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+
+<h2>地域の困りごと投稿</h2>
+
+<input id="title" placeholder="タイトル"><br><br>
+
+<select id="category">
+  <option>高齢者</option>
+  <option>子ども</option>
+  <option>ゴミ</option>
+  <option>防犯</option>
+  <option>交通</option>
+  <option>その他</option>
+</select><br><br>
+
+<textarea id="content" rows="4" placeholder="内容"></textarea><br><br>
+
+<input id="location" placeholder="場所（〇丁目まで）"><br><br>
+
+<button onclick="saveIssue()">投稿</button>
+
+<hr>
+
+<h2>一覧</h2>
+<div id="list"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc,
+  query, orderBy, onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// 🔽 Firebase設定（あなたのもの）
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCuA1iGo0nHN7w4tuv6LaQ34I41Yp0EXbE",
+  authDomain: "chiiki-komarigoto.firebaseapp.com",
+  projectId: "chiiki-komarigoto",
+  storageBucket: "chiiki-komarigoto.firebasestorage.app",
+  messagingSenderId: "278691153990",
+  appId: "1:278691153990:web:3dbc7a67c2959a9a726247"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 保存
+window.saveIssue = async () => {
+  await addDoc(collection(db, "issues"), {
+    title: title.value,
+    category: category.value,
+    content: content.value,
+    location: location.value,
+    status: "未対応",
+    createdAt: serverTimestamp()
+  });
+  title.value = "";
+  content.value = "";
+  location.value = "";
+};
+
+// 一覧表示（リアルタイム）
+const q = query(
+  collection(db, "issues"),
+  orderBy("createdAt", "desc")
+);
+
+onSnapshot(q, (snapshot) => {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    list.innerHTML += `
+      <div class="issue">
+        <strong>${d.title}</strong><br>
+        【${d.category}】 ${d.location}<br>
+        ${d.content}<br>
+        <div class="status">状態：${d.status}</div>
+      </div>
+    `;
+  });
+});
+</script>
+
+</body>
+</html>
