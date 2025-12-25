@@ -4,50 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>地域の困りごと投稿</title>
-
-<style>
-body {
-  font-family: sans-serif;
-  background: #f2f2f2;
-  margin: 0;
-  padding: 16px;
-}
-
-h1 {
-  text-align: center;
-}
-
-input, select, textarea, button {
-  width: 100%;
-  margin-bottom: 12px;
-  padding: 8px;
-  font-size: 16px;
-}
-
-button {
-  background: #4f46e5;
-  color: white;
-  border: none;
-  border-radius: 6px;
-}
-</style>
 </head>
 <body>
 
-<h1>地域の困りごと投稿</h1>
+<h2>地域の困りごと投稿</h2>
 
-<input id="title" placeholder="タイトル">
-
-<input id="location" placeholder="地域・場所（例：○○町）">
+<input id="title" placeholder="タイトル"><br><br>
+<input id="location" placeholder="地域・場所"><br><br>
 
 <select id="category">
   <option value="高齢者">高齢者</option>
   <option value="子育て">子育て</option>
-  <option value="障害">障害</option>
-  <option value="生活困窮">生活困窮</option>
-</select>
+</select><br><br>
 
-<textarea id="content" rows="5" placeholder="困っている内容"></textarea>
+<textarea id="content" placeholder="内容"></textarea><br><br>
 
 <button id="submitBtn">投稿</button>
 
@@ -67,35 +37,40 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-document.getElementById("submitBtn").addEventListener("click", async () => {
-  const title = document.getElementById("title").value.trim();
-  const location = document.getElementById("location").value.trim();
-  const category = document.getElementById("category").value;
-  const content = document.getElementById("content").value.trim();
+document.getElementById("submitBtn").onclick = async () => {
+
+  const titleEl = document.getElementById("title");
+  const locationEl = document.getElementById("location");
+  const categoryEl = document.getElementById("category");
+  const contentEl = document.getElementById("content");
+
+  // 🔒 undefined完全防止
+  const title = titleEl ? titleEl.value : "";
+  const location = locationEl ? locationEl.value : "";
+  const category = categoryEl ? categoryEl.value : "";
+  const content = contentEl ? contentEl.value : "";
+
+  console.log({ title, location, category, content });
 
   if (!title || !location || !content) {
-    alert("未入力の項目があります");
+    alert("未入力があります");
     return;
   }
 
   try {
     await addDoc(collection(db, "issues"), {
-      title,
-      location,
-      category,
-      content,
+      title: String(title),
+      location: String(location),
+      category: String(category),
+      content: String(content),
       createdAt: serverTimestamp()
     });
 
-    alert("投稿しました！");
-    document.getElementById("title").value = "";
-    document.getElementById("location").value = "";
-    document.getElementById("content").value = "";
-
+    alert("投稿成功！");
   } catch (e) {
-    alert("エラー：" + e.message);
+    alert("Firestoreエラー: " + e.message);
   }
-});
+};
 </script>
 
 </body>
